@@ -9,7 +9,7 @@
 #include "PPMfluidVal.h"
 #include "PPMliquefier.h"
 #include "PPMsourceGauss.h"
-#include "PPMfreezeout.h"
+#include "PPMmusic_freezeout.h"
 #include "PPMprinter.h"
 
 
@@ -37,7 +37,7 @@ private:
     std::shared_ptr<FluidValuables> fval;
     std::unique_ptr<Printer> printer;
     
-    
+    void store_previous_step_for_freezeout(SCGrid &arena_freezeout);    
     
     void InitialSetting();
     

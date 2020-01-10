@@ -58,7 +58,7 @@ void Evolve::InitialSetting(){
     (new Printer( run_num, eos, coord, DATA, arena ));
     
     freezeout = std::unique_ptr<Freezeout>
-    (new Freezeout( run_num, coord, fval, DATA, arena ));
+    (new Freezeout( run_num, eos, coord, fval, DATA, arena ));
     
     if( DATA.source==1 ){
         liquefier = std::unique_ptr<Liquefier>
@@ -75,13 +75,18 @@ void Evolve::EvolveIt(){
     
     int itmax = DATA.nt;
     std::array<int, 3> evoDir = {0,1,2};
-    
+   
+    SCGrid arena_freezeout(arena.nX(),
+		           arena.nY(),
+			   arena.nEta()); 
 
     //----------------------------------------------------------------
     for (int it = 0; it <= itmax; it++) {
 
-        ppm_status = freezeout->FindFreezeoutSurface(ppm_status);
-        printer->PrintProfile(ppm_status);
+        if (it == 0) store_previous_step_for_freezeout(arena_freezeout);
+        
+        ppm_status = freezeout->FindFreezeoutSurface(ppm_status, arena_freezeout);
+	printer->PrintProfile(ppm_status);
         if( ppm_status == ppm_finished ){
             break;
         }
@@ -95,10 +100,12 @@ void Evolve::EvolveIt(){
         <<" fm ->";
         ppm_status = ppm_running;
         StepDtau( it, evoDir );
+        
+        store_previous_step_for_freezeout(arena_freezeout);
     } /* it */
     //----------------------------------------------------------------
     ppm_status = ppm_finished;
-    ppm_status = freezeout->FindFreezeoutSurface(ppm_status);
+    ppm_status = freezeout->FindFreezeoutSurface(ppm_status, arena_freezeout);
 
     JSINFO
     << "<-[PPM] Hydro Evolution Run "
@@ -107,6 +114,18 @@ void Evolve::EvolveIt(){
     << coord->tau*hbarc
     <<" fm/c ->";
     
+}
+
+void Evolve::store_previous_step_for_freezeout(SCGrid &arena_freezeout) {
+    const int nx   = arena.nX();
+    const int ny   = arena.nY();
+    const int neta = arena.nEta();
+    #pragma omp parallel for collapse(3)
+    for (int ieta = 3; ieta < neta-3; ieta++)
+    for (int ix = 3;   ix   < nx-3;   ix++)
+    for (int iy = 3;   iy   < ny-3;   iy++) {
+        arena_freezeout(ix, iy, ieta) = arena(ix, iy, ieta);
+    }
 }
 
 void Evolve::StepDtau( int it, std::array<int, 3> &evoDir ){

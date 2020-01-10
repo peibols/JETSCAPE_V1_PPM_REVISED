@@ -1,11 +1,11 @@
-#include "PPMfreezeout.h"
+#include "PPMmusic_freezeout.h"
 #include "JetScapeLogger.h"
 
 
 using namespace Jetscape;
 using namespace std;
 
-Freezeout::Freezeout( int run_num_in,
+Freezeout::Freezeout( int run_num_in, std::shared_ptr<EOS> eos_in,
                      std::shared_ptr<Coordinates> coord_in,
                      std::shared_ptr<FluidValuables> fval_in,
                      InitData &DATA_in,
@@ -15,6 +15,7 @@ Freezeout::Freezeout( int run_num_in,
     JSINFO << "<-[PPM] Creating Freezeout ->";
     
     run_num = run_num_in;
+    eos = eos_in;
     coord = coord_in;
     fval = fval_in;
     
@@ -57,22 +58,22 @@ void Freezeout::OpenSurfaceFile(){
     ofs_freezeout.open(surface_filename.c_str(), ios_base::out);
 }
 
-int Freezeout::FindFreezeoutSurface( int ppm_status ){
+int Freezeout::FindFreezeoutSurface( int ppm_status, SCGrid arena_freezeout ){
     
     if( DATA.fo_type == 1 && ppm_status == ppm_not_start ){
         //first step for isothermal
-        IsochronousFreezeout( 1 );
+        IsochronousFreezeout();
         return ppm_status;
         
     }else if( DATA.fo_type == 1 && ppm_status == ppm_running ){
         //isothermal
-        int status = FullFreezeout();
+        int status = FullFreezeout(arena_freezeout);
         return status;
     }else if( ppm_status == ppm_finished ){
-        if( DATA.fo_type == 2 ){
+        //if( DATA.fo_type == 2 ){
             //isochronous
-            IsochronousFreezeout( 0 );
-        }
+            //IsochronousFreezeout();
+        //}
         ofs_freezeout.close();
         if( DATA.surface_check == 1 ){
             
@@ -87,6 +88,7 @@ int Freezeout::FindFreezeoutSurface( int ppm_status ){
     
 }
 
+/*
 void Freezeout::IsochronousFreezeout( int threshold ){
     
     double t_cut = temp_fo;
@@ -155,7 +157,6 @@ void Freezeout::IsochronousFreezeout( int threshold ){
     ofs_freezeout << std::flush;
     
 }
-
 
 int Freezeout::FullFreezeout(){
     JSINFO
@@ -353,3 +354,4 @@ void Freezeout::SurfaceFreezeout(const std::array<int, 3> &i_cell,
         }
     }
 }
+*/

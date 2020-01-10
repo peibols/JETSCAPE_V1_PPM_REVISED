@@ -9,6 +9,8 @@
 #include "PPMstatus.h"
 #include "PPMfluidVal.h"
 #include "PPMsurfaceCheck.h"
+#include "PPMprinter.h" 
+#include "PPMeos.h"
 
 #include <string>
 #include <iostream>
@@ -29,7 +31,8 @@ private:
     
     InitData &DATA;
     SCGrid &arena;
-    
+    std::shared_ptr<EOS> eos;
+
     std::shared_ptr<Coordinates> coord;
     std::shared_ptr<FluidValuables> fval;
     
@@ -44,8 +47,12 @@ private:
     std::ofstream ofs_freezeout;
     void OpenSurfaceFile();
     
-    void IsochronousFreezeout( int threshold );
-    int FullFreezeout();
+    void IsochronousFreezeout();
+    void FreezeOut_equal_tau_Surface_XY(int ieta, int , double);
+    int FullFreezeout(SCGrid &arena_freezeout);
+    int FindFreezeOutSurface_Cornelius_XY(int ieta, SCGrid &arena_freezeout, int thread_id, double epsFO);
+
+    /*
     void BulkFreezeout(const std::array<int, 3> &i_cell,
                        const std::array<double, 3> &x_cell,
                        const std::array<double, 4> &dsigma);
@@ -57,18 +64,18 @@ private:
     std::array<std::array<int, 3>, 3> point_next{{{1,0,0},
                                                   {0,1,0},
                                                   {0,0,1}}};
-    
+    */
     
     
 public:
-    Freezeout( int run_num_in,
+    Freezeout( int run_num_in, std::shared_ptr<EOS> eos_in,
               std::shared_ptr<Coordinates> coord_in,
               std::shared_ptr<FluidValuables> fval_in,
               InitData &DATA_in,
               SCGrid &arena_in );
     ~Freezeout();// destructor
     
-    int FindFreezeoutSurface(int ppm_status);
+    int FindFreezeoutSurface(int ppm_status, SCGrid arena_freezeout);
     
     
     
